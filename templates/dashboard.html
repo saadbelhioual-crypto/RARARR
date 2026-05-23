@@ -1,0 +1,392 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Dashboard - RAGNARHOST</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
+    <style>
+        :root {
+            --neon-blue: #3b82f6;
+            --deep-black: #0a0a0f;
+            --slate: #1e293b;
+            --accent-cyan: #22d3ee;
+        }
+        body {
+            background: linear-gradient(135deg, #0a0a0f 0%, #0f172a 100%);
+            color: #e2e8f0;
+            font-family: 'Inter', system-ui, -apple-system, sans-serif;
+        }
+        .card-dash {
+            background: linear-gradient(145deg, #1e293b, #0f172a);
+            border: 1px solid rgba(59,130,246,0.25);
+            border-radius: 16px;
+            transition: all 0.3s ease;
+        }
+        .card-dash:hover {
+            border-color: rgba(59,130,246,0.5);
+        }
+        .btn-accent {
+            background: linear-gradient(135deg, #2563eb, #1d4ed8);
+            border: 1px solid rgba(59,130,246,0.5);
+            transition: all 0.3s ease;
+        }
+        .btn-accent:hover {
+            box-shadow: 0 0 20px rgba(59,130,246,0.35);
+        }
+        .btn-danger {
+            background: linear-gradient(135deg, #dc2626, #b91c1c);
+            border: 1px solid rgba(220,38,38,0.5);
+        }
+        .btn-success {
+            background: linear-gradient(135deg, #16a34a, #15803d);
+            border: 1px solid rgba(22,163,74,0.5);
+        }
+        .console-window {
+            background: #000000;
+            border: 1px solid #1e293b;
+            border-radius: 12px;
+            font-family: 'Courier New', monospace;
+            color: #22d3ee;
+            max-height: 300px;
+            overflow-y: auto;
+        }
+        .input-dark {
+            background: #0f172a;
+            border: 1px solid rgba(59,130,246,0.3);
+            color: white;
+            transition: all 0.3s;
+        }
+        .input-dark:focus {
+            border-color: #3b82f6;
+            box-shadow: 0 0 12px rgba(59,130,246,0.15);
+            outline: none;
+        }
+        .modal-overlay {
+            background: rgba(0,0,0,0.8);
+            backdrop-filter: blur(4px);
+        }
+        .file-row {
+            transition: background 0.2s;
+        }
+        .file-row:hover {
+            background: rgba(59,130,246,0.05);
+        }
+        textarea.code-editor {
+            background: #0a0a0f;
+            color: #e2e8f0;
+            font-family: 'Courier New', monospace;
+            border: 1px solid #1e293b;
+        }
+        footer {
+            background: rgba(10,10,15,0.95);
+            border-top: 1px solid rgba(59,130,246,0.2);
+        }
+        @media (max-width: 640px) {
+            .server-grid {
+                grid-template-columns: 1fr;
+            }
+        }
+    </style>
+</head>
+<body class="min-h-screen flex flex-col">
+    <!-- Top Navbar -->
+    <nav class="bg-opacity-90 bg-[#0a0a0f] backdrop-blur-md border-b border-blue-900/30 sticky top-0 z-40">
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+            <div class="flex justify-between h-16 items-center">
+                <span class="text-xl font-bold text-blue-400">⚡ RAGNARHOST</span>
+                <div class="flex items-center space-x-4">
+                    <span class="text-gray-400 text-sm hidden sm:inline">{{ current_user.username }}</span>
+                    <a href="{{ url_for('logout') }}" class="text-gray-400 hover:text-white text-sm font-medium">Logout</a>
+                </div>
+            </div>
+        </div>
+    </nav>
+
+    <main class="flex-grow max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8 w-full">
+        <!-- Flash Messages -->
+        {% with messages = get_flashed_messages(with_categories=true) %}
+            {% if messages %}
+                {% for category, message in messages %}
+                    <div class="mb-6 p-3 rounded-lg text-sm {% if category == 'success' %}bg-green-900/50 text-green-300 border border-green-700{% elif category == 'danger' %}bg-red-900/50 text-red-300 border border-red-700{% elif category == 'warning' %}bg-yellow-900/50 text-yellow-300 border border-yellow-700{% else %}bg-blue-900/50 text-blue-300 border border-blue-700{% endif %}">
+                        {{ message }}
+                    </div>
+                {% endfor %}
+            {% endif %}
+        {% endwith %}
+
+        <!-- Header & Create Button -->
+        <div class="flex flex-col sm:flex-row justify-between items-start sm:items-center mb-8 gap-4">
+            <div>
+                <h1 class="text-2xl md:text-3xl font-bold text-white">Control Panel</h1>
+                <p class="text-gray-400 text-sm">Manage your servers and files</p>
+            </div>
+            <button onclick="openCreateModal()" class="btn-accent text-white px-6 py-3 rounded-xl font-semibold shadow-lg flex items-center gap-2">
+                <span>+</span> Create Server
+            </button>
+        </div>
+
+        <!-- Server Limit Info -->
+        <div class="mb-6 p-4 card-dash">
+            <p class="text-gray-400">
+                Servers: <span class="text-white font-bold">{{ servers|length }}</span> / 
+                <span class="text-blue-400 font-bold">{{ 'Unlimited' if current_user.is_premium else '1' }}</span>
+                {% if not current_user.is_premium %}
+                    <span class="text-yellow-400 text-sm ml-2">(Upgrade to Premium for unlimited)</span>
+                {% endif %}
+            </p>
+        </div>
+
+        <!-- Servers Grid -->
+        <div class="grid grid-cols-1 lg:grid-cols-2 gap-6" id="servers-container">
+            {% for server in servers %}
+            <div class="card-dash p-6" id="server-{{ server.id }}">
+                <div class="flex justify-between items-start mb-4">
+                    <div>
+                        <h3 class="text-xl font-bold text-white">{{ server.name }}</h3>
+                        <p class="text-gray-500 text-sm">{{ server.description or 'No description' }}</p>
+                    </div>
+                    <span class="text-xs px-2 py-1 rounded-full {% if server.status == 'running' %}bg-green-900/50 text-green-400{% else %}bg-gray-800 text-gray-500{% endif %}">
+                        {{ server.status }}
+                    </span>
+                </div>
+                
+                <!-- Address -->
+                <div class="mb-4 p-3 bg-black/30 rounded-lg">
+                    <span class="text-gray-500 text-xs">Address:</span>
+                    <code class="text-cyan-400 text-sm break-all">http://{{ server.node }}:{{ server.port }}</code>
+                </div>
+
+                <!-- Main File Selector -->
+                <div class="mb-4">
+                    <label class="text-gray-400 text-xs">Main File:</label>
+                    <form method="POST" action="{{ url_for('set_main_file', server_id=server.id) }}" class="flex gap-2">
+                        <input type="text" name="main_file" value="{{ server.main_file }}" 
+                               class="input-dark flex-grow px-3 py-2 rounded-lg text-sm">
+                        <button type="submit" class="btn-accent text-white px-3 py-2 rounded-lg text-sm">Set</button>
+                    </form>
+                </div>
+
+                <!-- Action Buttons -->
+                <div class="flex flex-wrap gap-2 mb-4">
+                    <form method="POST" action="{{ url_for('start_server', server_id=server.id) }}">
+                        <button class="btn-success text-white px-4 py-2 rounded-lg text-sm font-medium">Start</button>
+                    </form>
+                    <form method="POST" action="{{ url_for('stop_server', server_id=server.id) }}">
+                        <button class="bg-yellow-700 hover:bg-yellow-600 text-white px-4 py-2 rounded-lg text-sm font-medium">Stop</button>
+                    </form>
+                    <form method="POST" action="{{ url_for('delete_server', server_id=server.id) }}" onsubmit="return confirm('Delete this server permanently?');">
+                        <button class="btn-danger text-white px-4 py-2 rounded-lg text-sm font-medium">Delete</button>
+                    </form>
+                </div>
+
+                <!-- Console & Charts -->
+                <div class="console-window p-3 text-xs mb-4" id="console-{{ server.id }}">
+                    <div class="text-gray-500">Click "Start" to boot...</div>
+                </div>
+                <div class="grid grid-cols-2 gap-4">
+                    <canvas id="cpu-{{ server.id }}" width="150" height="100"></canvas>
+                    <canvas id="ram-{{ server.id }}" width="150" height="100"></canvas>
+                </div>
+
+                <!-- File Manager -->
+                <div class="mt-4 pt-4 border-t border-gray-700/30">
+                    <h4 class="text-white font-semibold mb-2 text-sm">📁 File Manager</h4>
+                    <div id="file-list-{{ server.id }}" class="max-h-48 overflow-y-auto mb-2"></div>
+                    <div class="flex gap-2 flex-wrap">
+                        <input type="file" id="file-upload-{{ server.id }}" class="hidden" onchange="uploadFile({{ server.id }}, this)">
+                        <button onclick="document.getElementById('file-upload-{{ server.id }}').click()" class="text-xs bg-gray-700 hover:bg-gray-600 text-white px-3 py-1 rounded">Upload</button>
+                        <button onclick="createFile({{ server.id }})" class="text-xs bg-gray-700 hover:bg-gray-600 text-white px-3 py-1 rounded">New File</button>
+                        <button onclick="loadRequirements({{ server.id }})" class="text-xs bg-gray-700 hover:bg-gray-600 text-white px-3 py-1 rounded">📦 Reqs</button>
+                    </div>
+                    <div id="reqs-{{ server.id }}" class="mt-2 text-xs text-gray-400"></div>
+                    <!-- Code Editor -->
+                    <textarea id="editor-{{ server.id }}" class="code-editor w-full h-32 mt-2 p-2 rounded text-xs hidden" placeholder="Select a file to edit..."></textarea>
+                    <button id="save-btn-{{ server.id }}" onclick="saveFile({{ server.id }})" class="hidden btn-accent text-white px-3 py-1 rounded text-xs mt-1">Save File</button>
+                </div>
+            </div>
+            {% endfor %}
+        </div>
+
+        {% if servers|length == 0 %}
+        <div class="text-center py-20">
+            <p class="text-gray-500 text-lg">No servers yet. Create your first server!</p>
+        </div>
+        {% endif %}
+    </main>
+
+    <!-- Create Server Modal -->
+    <div id="create-modal" class="fixed inset-0 z-50 flex items-center justify-center hidden modal-overlay">
+        <div class="card-dash p-8 w-full max-w-md mx-4">
+            <h2 class="text-2xl font-bold text-white mb-6">Create New Server</h2>
+            <form method="POST" action="{{ url_for('create_server') }}" class="space-y-4">
+                <div>
+                    <label class="block text-sm text-gray-300 mb-1">Server Name *</label>
+                    <input type="text" name="name" required class="input-dark w-full px-4 py-3 rounded-lg" placeholder="My Python App">
+                </div>
+                <div>
+                    <label class="block text-sm text-gray-300 mb-1">Description (optional)</label>
+                    <textarea name="description" class="input-dark w-full px-4 py-3 rounded-lg" rows="2"></textarea>
+                </div>
+                <div>
+                    <label class="block text-sm text-gray-300 mb-1">Language</label>
+                    <select name="language" class="input-dark w-full px-4 py-3 rounded-lg">
+                        <option value="Python" selected>Python</option>
+                    </select>
+                </div>
+                <div class="flex gap-3 pt-2">
+                    <button type="button" onclick="closeCreateModal()" class="flex-1 border border-gray-600 text-gray-300 py-3 rounded-lg hover:bg-gray-700">Cancel</button>
+                    <button type="submit" class="flex-1 btn-accent text-white py-3 rounded-lg font-semibold">Create</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <footer class="py-6 text-center">
+        <p class="text-gray-500 text-sm">Developed entirely by JAGWAR. All rights reserved.</p>
+    </footer>
+
+    <script>
+        // Modal functions
+        function openCreateModal() { document.getElementById('create-modal').classList.remove('hidden'); }
+        function closeCreateModal() { document.getElementById('create-modal').classList.add('hidden'); }
+
+        // Console & Chart loading
+        {% for server in servers %}
+        (function() {
+            var serverId = {{ server.id }};
+            // Charts
+            var cpuCtx = document.getElementById('cpu-' + serverId).getContext('2d');
+            var ramCtx = document.getElementById('ram-' + serverId).getContext('2d');
+            new Chart(cpuCtx, {
+                type: 'doughnut',
+                data: {
+                    labels: ['Used', 'Free'],
+                    datasets: [{
+                        data: [{{ server.cpu_usage }}, 100 - {{ server.cpu_usage }}],
+                        backgroundColor: ['#3b82f6', '#1e293b'],
+                        borderWidth: 0
+                    }]
+                },
+                options: { plugins: { legend: { display: false } }, cutout: '70%' }
+            });
+            new Chart(ramCtx, {
+                type: 'doughnut',
+                data: {
+                    labels: ['Used', 'Free'],
+                    datasets: [{
+                        data: [{{ server.ram_usage }}, 100 - {{ server.ram_usage }}],
+                        backgroundColor: ['#22d3ee', '#1e293b'],
+                        borderWidth: 0
+                    }]
+                },
+                options: { plugins: { legend: { display: false } }, cutout: '70%' }
+            });
+
+            // Load console
+            fetch('/server/' + serverId + '/console')
+                .then(r => r.json())
+                .then(data => {
+                    var consoleDiv = document.getElementById('console-' + serverId);
+                    consoleDiv.innerHTML = data.lines.map(l => '<div>' + l + '</div>').join('');
+                });
+
+            // Load file list
+            loadFileList(serverId);
+        })();
+        {% endfor %}
+
+        function loadFileList(serverId) {
+            fetch('/server/' + serverId + '/files')
+                .then(r => r.json())
+                .then(data => {
+                    var container = document.getElementById('file-list-' + serverId);
+                    container.innerHTML = data.files.map(f => 
+                        '<div class="file-row flex justify-between items-center py-1 px-2 rounded text-sm">' +
+                        '<span class="cursor-pointer text-cyan-400" onclick="editFile(' + serverId + ', \'' + f.name + '\')">' + 
+                        (f.type === 'directory' ? '📁 ' : '📄 ') + f.name + '</span>' +
+                        '<span class="flex gap-1">' +
+                        '<button onclick="deleteFile(' + serverId + ', \'' + f.name + '\')" class="text-red-400 text-xs">🗑</button>' +
+                        '</span></div>'
+                    ).join('');
+                });
+        }
+
+        function editFile(serverId, filename) {
+            fetch('/server/' + serverId + '/file/read?filename=' + encodeURIComponent(filename))
+                .then(r => r.json())
+                .then(data => {
+                    var editor = document.getElementById('editor-' + serverId);
+                    var saveBtn = document.getElementById('save-btn-' + serverId);
+                    editor.classList.remove('hidden');
+                    saveBtn.classList.remove('hidden');
+                    editor.value = data.content;
+                    editor.dataset.filename = filename;
+                });
+        }
+
+        function saveFile(serverId) {
+            var editor = document.getElementById('editor-' + serverId);
+            var filename = editor.dataset.filename;
+            fetch('/server/' + serverId + '/file/write', {
+                method: 'POST',
+                headers: {'Content-Type': 'application/json'},
+                body: JSON.stringify({filename: filename, content: editor.value})
+            })
+            .then(r => r.json())
+            .then(data => {
+                alert('File saved!');
+                loadFileList(serverId);
+            });
+        }
+
+        function deleteFile(serverId, filename) {
+            if (!confirm('Delete ' + filename + '?')) return;
+            fetch('/server/' + serverId + '/file/delete', {
+                method: 'POST',
+                headers: {'Content-Type': 'application/json'},
+                body: JSON.stringify({filename: filename})
+            })
+            .then(r => r.json())
+            .then(data => loadFileList(serverId));
+        }
+
+        function createFile(serverId) {
+            var name = prompt('Enter file name:');
+            if (!name) return;
+            fetch('/server/' + serverId + '/file/write', {
+                method: 'POST',
+                headers: {'Content-Type': 'application/json'},
+                body: JSON.stringify({filename: name, content: '# New file'})
+            })
+            .then(r => r.json())
+            .then(data => loadFileList(serverId));
+        }
+
+        function uploadFile(serverId, input) {
+            var formData = new FormData();
+            formData.append('file', input.files[0]);
+            fetch('/server/' + serverId + '/file/upload', {
+                method: 'POST',
+                body: formData
+            })
+            .then(r => r.json())
+            .then(data => {
+                loadFileList(serverId);
+                input.value = '';
+            });
+        }
+
+        function loadRequirements(serverId) {
+            fetch('/server/' + serverId + '/requirements')
+                .then(r => r.json())
+                .then(data => {
+                    var container = document.getElementById('reqs-' + serverId);
+                    container.innerHTML = '<strong>Requirements:</strong> ' + 
+                        (data.libraries.length > 0 ? data.libraries.join(', ') : 'None');
+                });
+        }
+    </script>
+</body>
+</html>
