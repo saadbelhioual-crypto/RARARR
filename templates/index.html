@@ -1,0 +1,203 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>RAGNARHOST - Premium Web Hosting</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <style>
+        :root {
+            --neon-blue: #3b82f6;
+            --deep-black: #0a0a0f;
+            --slate: #1e293b;
+            --accent-cyan: #22d3ee;
+            --accent-gray: #94a3b8;
+        }
+        body {
+            background: linear-gradient(135deg, var(--deep-black) 0%, #0f172a 100%);
+            color: #e2e8f0;
+            font-family: 'Inter', system-ui, -apple-system, sans-serif;
+        }
+        .hero-glow {
+            text-shadow: 0 0 30px rgba(59,130,246,0.5), 0 0 60px rgba(59,130,246,0.2);
+        }
+        .card-premium {
+            background: linear-gradient(145deg, #1e293b, #0f172a);
+            border: 1px solid rgba(59,130,246,0.3);
+            transition: all 0.3s ease;
+        }
+        .card-premium:hover {
+            border-color: var(--neon-blue);
+            box-shadow: 0 0 25px rgba(59,130,246,0.15);
+            transform: translateY(-2px);
+        }
+        .btn-primary {
+            background: linear-gradient(135deg, #2563eb, #1d4ed8);
+            border: 1px solid rgba(59,130,246,0.5);
+            transition: all 0.3s ease;
+        }
+        .btn-primary:hover {
+            box-shadow: 0 0 20px rgba(59,130,246,0.4);
+            transform: translateY(-1px);
+        }
+        .stat-number {
+            background: linear-gradient(180deg, #60a5fa, #3b82f6);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+        }
+        footer {
+            background: rgba(10,10,15,0.95);
+            border-top: 1px solid rgba(59,130,246,0.2);
+        }
+    </style>
+</head>
+<body class="min-h-screen flex flex-col">
+    <!-- Mobile-responsive Nav -->
+    <nav class="bg-opacity-90 bg-[#0a0a0f] backdrop-blur-md border-b border-blue-900/30 sticky top-0 z-50">
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+            <div class="flex justify-between h-16 items-center">
+                <div class="flex-shrink-0 flex items-center">
+                    <span class="text-2xl font-bold text-blue-400 tracking-tight">⚡ RAGNAR<span class="text-white">HOST</span></span>
+                </div>
+                <!-- Desktop menu -->
+                <div class="hidden md:flex items-center space-x-4">
+                    <a href="#features" class="text-gray-300 hover:text-blue-400 transition px-3 py-2 text-sm font-medium">Features</a>
+                    <a href="#pricing" class="text-gray-300 hover:text-blue-400 transition px-3 py-2 text-sm font-medium">Pricing</a>
+                    <a href="{{ url_for('login') }}" class="text-gray-300 hover:text-white transition px-3 py-2 text-sm font-medium">Login</a>
+                    <a href="{{ url_for('register') }}" class="btn-primary text-white px-5 py-2 rounded-lg text-sm font-semibold">Sign Up</a>
+                </div>
+                <!-- Mobile hamburger -->
+                <div class="md:hidden">
+                    <button id="mobile-menu-btn" class="text-gray-300 hover:text-white focus:outline-none">
+                        <svg class="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6h16M4 12h16M4 18h16" />
+                        </svg>
+                    </button>
+                </div>
+            </div>
+        </div>
+        <!-- Mobile menu -->
+        <div id="mobile-menu" class="hidden md:hidden bg-[#0a0a0f] border-t border-blue-900/30">
+            <div class="px-4 py-3 space-y-2">
+                <a href="#features" class="block text-gray-300 hover:text-blue-400 py-2 text-sm font-medium">Features</a>
+                <a href="#pricing" class="block text-gray-300 hover:text-blue-400 py-2 text-sm font-medium">Pricing</a>
+                <a href="{{ url_for('login') }}" class="block text-gray-300 hover:text-white py-2 text-sm font-medium">Login</a>
+                <a href="{{ url_for('register') }}" class="block btn-primary text-white px-5 py-2 rounded-lg text-sm font-semibold text-center">Sign Up</a>
+            </div>
+        </div>
+    </nav>
+
+    <!-- Hero Section -->
+    <main class="flex-grow">
+        <section class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-20 md:py-32 text-center">
+            <h1 class="text-5xl md:text-7xl font-extrabold hero-glow mb-6">
+                <span class="text-blue-400">RAGNAR</span><span class="text-white">HOST</span>
+            </h1>
+            <p class="text-xl md:text-2xl text-gray-400 max-w-3xl mx-auto mb-10">
+                Deploy Python Flask applications instantly with container-grade isolation. 
+                Dynamic port allocation, real-time file management, and enterprise monitoring.
+            </p>
+            <div class="flex flex-col sm:flex-row gap-4 justify-center">
+                <a href="{{ url_for('register') }}" class="btn-primary text-white px-8 py-4 rounded-xl text-lg font-bold shadow-lg">
+                    Get Started Free
+                </a>
+                <a href="#features" class="border border-blue-500/50 text-blue-400 hover:bg-blue-500/10 px-8 py-4 rounded-xl text-lg font-semibold transition">
+                    Learn More
+                </a>
+            </div>
+            <!-- Stats -->
+            <div class="grid grid-cols-1 sm:grid-cols-3 gap-6 mt-16 max-w-3xl mx-auto">
+                <div class="card-premium rounded-xl p-6">
+                    <div class="stat-number text-4xl font-bold">{{ total_servers }}</div>
+                    <div class="text-gray-400 text-sm mt-1">Total Servers Hosted</div>
+                </div>
+                <div class="card-premium rounded-xl p-6">
+                    <div class="stat-number text-4xl font-bold">{{ active_users }}</div>
+                    <div class="text-gray-400 text-sm mt-1">Active Users</div>
+                </div>
+                <div class="card-premium rounded-xl p-6">
+                    <div class="text-green-400 text-4xl font-bold">●</div>
+                    <div class="text-gray-400 text-sm mt-1">Node: {{ node_status }}</div>
+                </div>
+            </div>
+        </section>
+
+        <!-- Features -->
+        <section id="features" class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-16">
+            <h2 class="text-3xl md:text-4xl font-bold text-center text-white mb-12">Enterprise Features</h2>
+            <div class="grid grid-cols-1 md:grid-cols-3 gap-8">
+                <div class="card-premium rounded-xl p-8 text-center">
+                    <div class="text-5xl mb-4">🐳</div>
+                    <h3 class="text-xl font-bold text-white mb-3">Container Isolation</h3>
+                    <p class="text-gray-400">Each server runs in a sandboxed environment with dedicated resources and dynamic port mapping.</p>
+                </div>
+                <div class="card-premium rounded-xl p-8 text-center">
+                    <div class="text-5xl mb-4">📁</div>
+                    <h3 class="text-xl font-bold text-white mb-3">Live File Manager</h3>
+                    <p class="text-gray-400">Full CRUD operations with integrated code editor and requirements inspector.</p>
+                </div>
+                <div class="card-premium rounded-xl p-8 text-center">
+                    <div class="text-5xl mb-4">📊</div>
+                    <h3 class="text-xl font-bold text-white mb-3">Real-time Monitoring</h3>
+                    <p class="text-gray-400">CPU/RAM gauges and live console output for total transparency.</p>
+                </div>
+            </div>
+        </section>
+
+        <!-- Pricing -->
+        <section id="pricing" class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-16">
+            <h2 class="text-3xl md:text-4xl font-bold text-center text-white mb-12">Pricing Plans</h2>
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-8 max-w-4xl mx-auto">
+                <div class="card-premium rounded-xl p-8">
+                    <h3 class="text-2xl font-bold text-white mb-2">Free</h3>
+                    <p class="text-4xl font-bold text-blue-400 mb-4">$0<span class="text-lg text-gray-400">/month</span></p>
+                    <ul class="space-y-3 mb-6 text-gray-400">
+                        <li>✓ 1 Server</li>
+                        <li>✓ 512 MB RAM</li>
+                        <li>✓ Python Support</li>
+                        <li>✓ File Manager</li>
+                    </ul>
+                    <a href="{{ url_for('register') }}" class="block text-center border border-blue-500/50 text-blue-400 hover:bg-blue-500/10 py-3 rounded-lg font-semibold transition">Start Free</a>
+                </div>
+                <div class="card-premium rounded-xl p-8 relative overflow-hidden">
+                    <div class="absolute top-0 right-0 bg-blue-600 text-white text-xs font-bold px-3 py-1 rounded-bl-lg">POPULAR</div>
+                    <h3 class="text-2xl font-bold text-white mb-2">Premium</h3>
+                    <p class="text-4xl font-bold text-blue-400 mb-4">$9.99<span class="text-lg text-gray-400">/month</span></p>
+                    <ul class="space-y-3 mb-6 text-gray-400">
+                        <li>✓ Unlimited Servers</li>
+                        <li>✓ 2 GB RAM per server</li>
+                        <li>✓ Priority Support</li>
+                        <li>✓ Advanced Monitoring</li>
+                    </ul>
+                    <a href="{{ url_for('register') }}" class="block text-center btn-primary text-white py-3 rounded-lg font-semibold">Upgrade Now</a>
+                </div>
+            </div>
+        </section>
+    </main>
+
+    <!-- Footer -->
+    <footer class="py-8 mt-12">
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 text-center">
+            <p class="text-gray-500 text-sm">Developed entirely by JAGWAR. All rights reserved.</p>
+            <p class="text-gray-600 text-xs mt-1">© 2024 RAGNARHOST. Container-grade hosting platform.</p>
+        </div>
+    </footer>
+
+    <script>
+        // Mobile menu toggle
+        document.getElementById('mobile-menu-btn').addEventListener('click', function() {
+            var menu = document.getElementById('mobile-menu');
+            menu.classList.toggle('hidden');
+        });
+        // Smooth scroll
+        document.querySelectorAll('a[href^="#"]').forEach(anchor => {
+            anchor.addEventListener('click', function (e) {
+                e.preventDefault();
+                var target = document.querySelector(this.getAttribute('href'));
+                if (target) target.scrollIntoView({ behavior: 'smooth' });
+            });
+        });
+    </script>
+</body>
+</html>
