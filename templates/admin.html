@@ -5,72 +5,232 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Admin Panel - RAGNARHOST</title>
     <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
     <style>
+        @import url('https://fonts.googleapis.com/css2?family=Orbitron:wght@400;700;900&family=Rajdhani:wght@300;400;600;700&family=JetBrains+Mono:wght@400;700&display=swap');
+        
+        :root {
+            --neon-blue: #00d4ff;
+            --deep-black: #0a0a0f;
+            --slate: #1a1a2e;
+            --accent-cyan: #00f5d4;
+        }
+        
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        
         body {
-            background: linear-gradient(135deg, #0a0a0f 0%, #0f172a 100%);
-            color: #e2e8f0;
-            font-family: 'Inter', system-ui, -apple-system, sans-serif;
+            background: var(--deep-black);
+            color: #e0e0e0;
+            font-family: 'Rajdhani', sans-serif;
+            min-height: 100vh;
         }
-        .card-admin {
-            background: linear-gradient(145deg, #1e293b, #0f172a);
-            border: 1px solid rgba(220,38,38,0.3);
-            border-radius: 16px;
+        
+        .font-orbitron { font-family: 'Orbitron', monospace; }
+        .font-mono { font-family: 'JetBrains Mono', monospace; }
+        
+        .neon-text {
+            color: var(--neon-blue);
+            text-shadow: 0 0 10px rgba(0, 212, 255, 0.5);
         }
-        table { width: 100%; border-collapse: collapse; }
-        th, td { padding: 12px 16px; text-align: left; border-bottom: 1px solid #1e293b; }
-        th { color: #94a3b8; font-size: 0.75rem; text-transform: uppercase; letter-spacing: 0.05em; }
-        .btn-sm { padding: 6px 12px; border-radius: 8px; font-size: 0.75rem; font-weight: 600; }
-        .btn-premium { background: #f59e0b; color: black; }
-        .btn-suspend { background: #dc2626; color: white; }
-        .btn-delete { background: #7f1d1d; color: white; }
-        footer {
-            background: rgba(10,10,15,0.95);
-            border-top: 1px solid rgba(59,130,246,0.2);
+        
+        .card-dark {
+            background: rgba(26, 26, 46, 0.8);
+            backdrop-filter: blur(10px);
+            border: 1px solid rgba(0, 212, 255, 0.1);
+            border-radius: 12px;
+            padding: 20px;
         }
-        @media (max-width: 640px) {
-            .table-responsive { display: block; overflow-x: auto; }
+        
+        .btn-primary {
+            background: linear-gradient(135deg, #00d4ff, #0098b3);
+            color: #0a0a0f;
+            font-weight: 700;
+            padding: 8px 20px;
+            border-radius: 8px;
+            transition: all 0.3s ease;
+            font-family: 'Rajdhani', sans-serif;
+            font-size: 0.85rem;
+            cursor: pointer;
+            border: none;
+        }
+        
+        .btn-primary:hover {
+            box-shadow: 0 0 15px rgba(0, 212, 255, 0.4);
+        }
+        
+        .btn-danger {
+            background: linear-gradient(135deg, #ff4444, #cc0000);
+            color: white;
+            font-weight: 700;
+            padding: 8px 20px;
+            border-radius: 8px;
+            border: none;
+            cursor: pointer;
+            font-family: 'Rajdhani', sans-serif;
+            font-size: 0.85rem;
+        }
+        
+        .btn-warning {
+            background: linear-gradient(135deg, #ffaa00, #cc8800);
+            color: #0a0a0f;
+            font-weight: 700;
+            padding: 8px 20px;
+            border-radius: 8px;
+            border: none;
+            cursor: pointer;
+            font-family: 'Rajdhani', sans-serif;
+            font-size: 0.85rem;
+        }
+        
+        .badge {
+            display: inline-block;
+            padding: 4px 10px;
+            border-radius: 20px;
+            font-size: 0.75rem;
+            font-weight: 600;
+        }
+        
+        .badge-premium { background: rgba(255, 215, 0, 0.2); color: #ffd700; border: 1px solid rgba(255, 215, 0, 0.3); }
+        .badge-free { background: rgba(108, 117, 125, 0.2); color: #adb5bd; border: 1px solid rgba(108, 117, 125, 0.3); }
+        .badge-active { background: rgba(0, 255, 136, 0.2); color: #00ff88; border: 1px solid rgba(0, 255, 136, 0.3); }
+        .badge-suspended { background: rgba(255, 50, 50, 0.2); color: #ff4444; border: 1px solid rgba(255, 50, 50, 0.3); }
+        .badge-banned { background: rgba(255, 50, 50, 0.2); color: #ff4444; border: 1px solid rgba(255, 50, 50, 0.3); }
+        
+        table {
+            width: 100%;
+            border-collapse: collapse;
+        }
+        
+        th {
+            text-align: left;
+            padding: 12px;
+            background: rgba(0, 212, 255, 0.05);
+            border-bottom: 2px solid rgba(0, 212, 255, 0.2);
+            font-weight: 600;
+            font-size: 0.85rem;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+        }
+        
+        td {
+            padding: 10px 12px;
+            border-bottom: 1px solid rgba(255, 255, 255, 0.05);
+            font-size: 0.85rem;
+        }
+        
+        tr:hover td {
+            background: rgba(0, 212, 255, 0.03);
+        }
+        
+        .mobile-table {
+            overflow-x: auto;
+            -webkit-overflow-scrolling: touch;
+        }
+        
+        @media (max-width: 768px) {
+            .metric-card {
+                padding: 12px;
+            }
+            
+            .metric-value {
+                font-size: 1.5rem;
+            }
         }
     </style>
 </head>
-<body class="min-h-screen flex flex-col">
-    <nav class="bg-opacity-90 bg-[#0a0a0f] backdrop-blur-md border-b border-red-900/30 sticky top-0 z-40">
-        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 flex justify-between h-16 items-center">
-            <span class="text-xl font-bold text-red-400">⚡ RAGNARHOST ADMIN</span>
-            <div class="flex items-center space-x-4">
-                <a href="{{ url_for('dashboard') }}" class="text-gray-400 hover:text-white text-sm">Dashboard</a>
-                <a href="{{ url_for('logout') }}" class="text-gray-400 hover:text-white text-sm">Logout</a>
+<body class="antialiased">
+    <!-- Navigation -->
+    <nav class="sticky top-0 z-50 backdrop-blur-md border-b border-gray-800" style="background: rgba(10,10,15,0.95);">
+        <div class="max-w-7xl mx-auto px-4 sm:px-6">
+            <div class="flex items-center justify-between h-14">
+                <div class="flex items-center gap-4">
+                    <span class="text-xl font-orbitron font-bold neon-text">RAGNARHOST</span>
+                    <span class="badge badge-premium text-xs">ADMIN PANEL</span>
+                </div>
+                <div class="flex items-center gap-3">
+                    <a href="{{ url_for('dashboard') }}" class="btn-primary text-xs">Dashboard</a>
+                    <a href="{{ url_for('logout') }}" class="text-red-400 text-sm hover:text-red-300">Logout</a>
+                </div>
             </div>
         </div>
     </nav>
-
-    <main class="flex-grow max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8 w-full">
-        <h1 class="text-3xl font-bold text-white mb-8">Administrative Panel</h1>
-
-        <!-- Users Section -->
-        <div class="card-admin p-6 mb-8">
-            <h2 class="text-xl font-bold text-white mb-4">Users ({{ users|length }})</h2>
-            <div class="table-responsive">
+    
+    <div class="max-w-7xl mx-auto px-4 sm:px-6 py-6">
+        <!-- System Metrics -->
+        <div class="grid grid-cols-2 md:grid-cols-4 gap-4 mb-8">
+            <div class="card-dark metric-card text-center">
+                <div class="text-2xl md:text-3xl font-bold text-cyan-400 metric-value">{{ metrics.cpu }}%</div>
+                <div class="text-xs text-gray-400 mt-1">CPU Usage</div>
+            </div>
+            <div class="card-dark metric-card text-center">
+                <div class="text-2xl md:text-3xl font-bold text-green-400 metric-value">{{ metrics.memory_percent }}%</div>
+                <div class="text-xs text-gray-400 mt-1">Memory Usage</div>
+            </div>
+            <div class="card-dark metric-card text-center">
+                <div class="text-2xl md:text-3xl font-bold text-yellow-400 metric-value">{{ metrics.disk_percent }}%</div>
+                <div class="text-xs text-gray-400 mt-1">Disk Usage</div>
+            </div>
+            <div class="card-dark metric-card text-center">
+                <div class="text-2xl md:text-3xl font-bold text-purple-400 metric-value">{{ metrics.active_connections }}</div>
+                <div class="text-xs text-gray-400 mt-1">Active Processes</div>
+            </div>
+        </div>
+        
+        <!-- Tabs -->
+        <div class="flex border-b border-gray-800 mb-6 overflow-x-auto">
+            <button onclick="switchTab('users')" class="tab-btn active px-4 py-2 text-sm font-semibold border-b-2 border-cyan-400 text-cyan-400 whitespace-nowrap">
+                👥 Users ({{ users|length }})
+            </button>
+            <button onclick="switchTab('servers')" class="tab-btn px-4 py-2 text-sm font-semibold border-b-2 border-transparent text-gray-400 hover:text-gray-200 whitespace-nowrap">
+                🖥️ Servers ({{ servers|length }})
+            </button>
+        </div>
+        
+        <!-- Users Table -->
+        <div id="tab-users" class="tab-content">
+            <div class="card-dark mobile-table">
                 <table>
                     <thead>
-                        <tr><th>ID</th><th>Username</th><th>Premium</th><th>Admin</th><th>Servers</th><th>Actions</th></tr>
+                        <tr>
+                            <th>ID</th>
+                            <th>Username</th>
+                            <th>Email</th>
+                            <th>Status</th>
+                            <th>Servers</th>
+                            <th>Joined</th>
+                            <th>Actions</th>
+                        </tr>
                     </thead>
                     <tbody>
                         {% for user in users %}
                         <tr>
-                            <td class="text-gray-400">{{ user.id }}</td>
-                            <td class="text-white font-medium">{{ user.username }}</td>
+                            <td class="font-mono text-gray-400">#{{ user.id }}</td>
+                            <td class="font-semibold">{{ user.username }}</td>
+                            <td class="text-gray-400">{{ user.email }}</td>
                             <td>
-                                <span class="text-xs px-2 py-1 rounded-full {% if user.is_premium %}bg-yellow-900/50 text-yellow-400{% else %}bg-gray-800 text-gray-500{% endif %}">
-                                    {{ 'Premium' if user.is_premium else 'Free' }}
-                                </span>
+                                {% if user.is_banned %}
+                                    <span class="badge badge-banned">Banned</span>
+                                {% elif user.is_admin %}
+                                    <span class="badge badge-premium">Admin</span>
+                                {% elif user.is_premium %}
+                                    <span class="badge badge-premium">Premium</span>
+                                {% else %}
+                                    <span class="badge badge-free">Free</span>
+                                {% endif %}
                             </td>
-                            <td>{{ 'Yes' if user.is_admin else 'No' }}</td>
                             <td>{{ user.servers|length }}</td>
-                            <td class="flex gap-2 flex-wrap">
-                                <button onclick="togglePremium({{ user.id }})" class="btn-sm btn-premium">
-                                    {{ 'Remove Premium' if user.is_premium else 'Grant Premium' }}
-                                </button>
-                                <button onclick="deleteUser({{ user.id }})" class="btn-sm btn-delete">Delete</button>
+                            <td class="text-gray-400 text-xs">{{ user.created_at.strftime('%Y-%m-%d') }}</td>
+                            <td>
+                                <div class="flex gap-1 flex-wrap">
+                                    {% if not user.is_admin %}
+                                        <button onclick="togglePremium({{ user.id }})" class="btn-warning text-xs px-2 py-1">
+                                            {{ 'Remove Premium' if user.is_premium else 'Grant Premium' }}
+                                        </button>
+                                        <button onclick="toggleBan({{ user.id }})" class="btn-danger text-xs px-2 py-1">
+                                            {{ 'Unban' if user.is_banned else 'Ban' }}
+                                        </button>
+                                    {% endif %}
+                                </div>
                             </td>
                         </tr>
                         {% endfor %}
@@ -78,31 +238,42 @@
                 </table>
             </div>
         </div>
-
-        <!-- Servers Section -->
-        <div class="card-admin p-6">
-            <h2 class="text-xl font-bold text-white mb-4">Servers ({{ servers|length }})</h2>
-            <div class="table-responsive">
+        
+        <!-- Servers Table -->
+        <div id="tab-servers" class="tab-content" style="display: none;">
+            <div class="card-dark mobile-table">
                 <table>
                     <thead>
-                        <tr><th>ID</th><th>Name</th><th>Owner</th><th>Port</th><th>Status</th><th>Suspended</th><th>Actions</th></tr>
+                        <tr>
+                            <th>ID</th>
+                            <th>Name</th>
+                            <th>Owner</th>
+                            <th>Port</th>
+                            <th>Status</th>
+                            <th>Main File</th>
+                            <th>Actions</th>
+                        </tr>
                     </thead>
                     <tbody>
                         {% for server in servers %}
                         <tr>
-                            <td class="text-gray-400">{{ server.id }}</td>
-                            <td class="text-white">{{ server.name }}</td>
+                            <td class="font-mono text-gray-400">#{{ server.id }}</td>
+                            <td class="font-semibold">{{ server.name }}</td>
                             <td class="text-gray-400">{{ server.owner.username }}</td>
-                            <td class="text-cyan-400">{{ server.port }}</td>
-                            <td>{{ server.status }}</td>
+                            <td class="font-mono text-cyan-400">{{ server.server_port }}</td>
                             <td>
-                                <span class="text-xs px-2 py-1 rounded-full {% if server.suspended %}bg-red-900/50 text-red-400{% else %}bg-green-900/50 text-green-400{% endif %}">
-                                    {{ 'Yes' if server.suspended else 'No' }}
-                                </span>
+                                {% if server.is_suspended %}
+                                    <span class="badge badge-suspended">Suspended</span>
+                                {% elif server.is_running %}
+                                    <span class="badge badge-active">Running</span>
+                                {% else %}
+                                    <span class="badge badge-free">Stopped</span>
+                                {% endif %}
                             </td>
+                            <td class="font-mono text-xs text-gray-400">{{ server.main_file }}</td>
                             <td>
-                                <button onclick="toggleSuspend({{ server.id }})" class="btn-sm btn-suspend">
-                                    {{ 'Unsuspend' if server.suspended else 'Suspend' }}
+                                <button onclick="toggleSuspend({{ server.id }})" class="btn-danger text-xs px-2 py-1">
+                                    {{ 'Unsuspend' if server.is_suspended else 'Suspend' }}
                                 </button>
                             </td>
                         </tr>
@@ -111,28 +282,63 @@
                 </table>
             </div>
         </div>
-    </main>
-
-    <footer class="py-6 text-center">
-        <p class="text-gray-500 text-sm">Developed entirely by JAGWAR. All rights reserved.</p>
-    </footer>
-
+        
+        <!-- Footer -->
+        <div class="text-center mt-12 py-6 border-t border-gray-800">
+            <p class="text-gray-500 text-sm">
+                Developed entirely by JAGWAR. All rights reserved.
+            </p>
+            <p class="text-gray-600 text-xs mt-1">
+                RAGNARHOST Admin Panel • {{ full_address }}
+            </p>
+        </div>
+    </div>
+    
     <script>
+        function switchTab(tabName) {
+            document.querySelectorAll('.tab-btn').forEach(btn => {
+                btn.classList.remove('active', 'border-cyan-400', 'text-cyan-400');
+                btn.classList.add('border-transparent', 'text-gray-400');
+            });
+            document.querySelectorAll('.tab-content').forEach(content => content.style.display = 'none');
+            
+            const activeBtn = document.querySelector(`[onclick="switchTab('${tabName}')"]`);
+            if (activeBtn) {
+                activeBtn.classList.add('active', 'border-cyan-400', 'text-cyan-400');
+                activeBtn.classList.remove('border-transparent', 'text-gray-400');
+            }
+            
+            const activeContent = document.getElementById(`tab-${tabName}`);
+            if (activeContent) activeContent.style.display = 'block';
+        }
+        
         function togglePremium(userId) {
-            fetch('/admin/toggle-premium/' + userId, { method: 'POST' })
+            fetch(`/api/admin/user/${userId}/toggle-premium`, { method: 'POST' })
                 .then(r => r.json())
-                .then(data => location.reload());
+                .then(data => {
+                    if (data.success) location.reload();
+                    else alert('Error: ' + data.error);
+                });
         }
+        
+        function toggleBan(userId) {
+            if (!confirm('Are you sure you want to toggle ban status for this user?')) return;
+            fetch(`/api/admin/user/${userId}/toggle-ban`, { method: 'POST' })
+                .then(r => r.json())
+                .then(data => {
+                    if (data.success) location.reload();
+                    else alert('Error: ' + data.error);
+                });
+        }
+        
         function toggleSuspend(serverId) {
-            fetch('/admin/toggle-suspend/' + serverId, { method: 'POST' })
+            if (!confirm('Are you sure you want to toggle suspension for this server?')) return;
+            fetch(`/api/admin/server/${serverId}/toggle-suspend`, { method: 'POST' })
                 .then(r => r.json())
-                .then(data => location.reload());
-        }
-        function deleteUser(userId) {
-            if (!confirm('Permanently delete this user and all their servers?')) return;
-            fetch('/admin/delete-user/' + userId, { method: 'POST' })
-                .then(r => r.json())
-                .then(data => location.reload());
+                .then(data => {
+                    if (data.success) location.reload();
+                    else alert('Error: ' + data.error);
+                });
         }
     </script>
 </body>
